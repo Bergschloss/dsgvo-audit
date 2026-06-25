@@ -13,6 +13,8 @@ Use this skill when the user invokes `/dsgvo-audit`, asks for:
 - "account deletion check", "data subject rights check"
 - "third-party processors", "Stripe AVV", "RustDesk DSGVO"
 
+**Default behavior when invoked without a scope argument**: run the full 7-phase audit sequentially on the entire repository. When a scope is provided (e.g. `/dsgvo-audit Scope: auth-registration`), run only the phases relevant to that scope and note which phases were skipped.
+
 **STRICT READ-ONLY**: Never modify, refactor, or create files inside the project repository. Only write reports to `$outDir` under `_Reports`.
 
 For security/auth/crypto depth — use `forensic-audit`. For UX/product logic — use `product-ux-audit`. This skill focuses exclusively on DSGVO/GDPR compliance surface.
@@ -45,9 +47,16 @@ Always carry this context through every phase — do not re-derive:
 1. **Task list**: Create a TaskCreate entry for each phase. Mark each `in_progress` when starting, `completed` when the phase file is verified. Never mark a phase complete without file verification.
 
 2. **Resolve output path**:
+
+   Windows (PowerShell):
    ```powershell
    $outDir = "$env:USERPROFILE\Desktop\_Reports\dsgvo-audit_$(Get-Date -Format 'yyyy-MM-dd_HHmm')"
    New-Item -ItemType Directory -Force -Path $outDir
+   ```
+   Linux / macOS (bash):
+   ```bash
+   outDir="$HOME/Desktop/_Reports/dsgvo-audit_$(date +%Y-%m-%d_%H%M)"
+   mkdir -p "$outDir"
    ```
    Abort if creation fails.
 
@@ -437,7 +446,11 @@ Check `apps/web` for Datenschutzerklärung page:
 
 Before writing the master summary, validate every CRITICAL and HIGH finding from all phases.
 
-- If subagents are available: spawn one fresh subagent (no shared context, read-only) per batch of findings. Give it only the finding text + repo path — not your reasoning. Ask it to verify each finding against the actual code and answer for each: **Confirmed / Overstated (downgrade severity) / Not an issue (drop)**, with a one-line reason.
+- If subagents are available: spawn one fresh subagent (no shared context, read-only) per batch of findings (5–10 findings per batch). Give it only the finding text + repo path — not your reasoning. Use this prompt template:
+
+  > "You are a DSGVO compliance reviewer with no prior context. Read the file at [repo path] and locate [file:line]. Verify the following finding against the actual code. Answer for each finding: **Confirmed**, **Overstated** (suggest downgraded severity and reason), or **Not an issue** (drop, with reason). Do not guess — cite the actual line you read.
+  > Finding: [paste full finding block]"
+
 - If subagents are not available: re-read the cited `file:line` yourself with fresh eyes and apply the same three-way verdict.
 
 Apply the verdicts (drop/downgrade/keep) before building the rollup table. Note in the master summary how many findings were dropped/downgraded and why — this is a signal of audit quality, not a failure.
@@ -514,6 +527,17 @@ Compliance Score: [N]/100
 DPIA Required: [YES/NO/UNCERTAIN]
 Regulatory Fine Risk: [LOW/MEDIUM/HIGH]
 ```
+
+---
+
+## Known Limitations
+
+- **Legal currency**: all legal references are based on DSGVO/BDSG/TTDSG/DDG as in force at time of writing. Verify regulatory text currency before relying on findings for formal filings or legal advice.
+- **Stack specificity**: RustDesk, Stripe, and Twilio sections reflect the reference stack (Prisma/Fastify/Next.js). Adapt processor names, field names, and route patterns for other architectures.
+- **Procedural gaps**: compliance gaps that are procedural rather than code-observable (missing DPA contracts, absent DPIA documentation, staff training, breach response procedures) are flagged where code evidence is absent, but cannot be fully verified from source alone.
+- **Severity = regulatory risk, not exploitability**: CRITICAL means high fine risk under Art. 83 DSGVO, not necessarily an exploitable vulnerability. For security depth, pair with `forensic-audit`.
+- **False positives**: the PII Quick Scan uses grep patterns and will match field names that are not actually personal data (e.g. `name` in a product model). The Challenge Pass filters these before the final report — do not skip it.
+- **No legal advice**: audit findings are engineering observations about compliance surface. They are not legal advice and do not constitute a formal DSGVO assessment.
 
 ---
 
