@@ -1,6 +1,6 @@
 ---
 name: dsgvo-audit
-description: Multi-phase DSGVO/GDPR compliance audit for the imma-help project (Germany). Scans Prisma schema, Fastify routes, Next.js App Router, Electron apps, SSE, Stripe, RustDesk, and Twilio integrations for personal data risks, missing legal bases, broken data subject rights endpoints, and third-party processor gaps. Use when invoked as /dsgvo-audit, asked for "DSGVO-Prüfung", "GDPR audit", "перевір DSGVO", "перевір захист даних", "dsgvo check", or "compliance check".
+description: Multi-phase DSGVO/GDPR compliance audit skill and task list for agentic QA systems (Germany). Scans database schemas, controller files, auth, subject rights (export/erasure), log/stream leakage, and third-party processor integrations for GDPR/DSGVO compliance surface. Use when invoked as /dsgvo-audit, or asked for "DSGVO-Prüfung", "GDPR audit", "dsgvo check", or "compliance check".
 ---
 
 # Skill: dsgvo-audit
@@ -19,23 +19,22 @@ For security/auth/crypto depth — use `forensic-audit`. For UX/product logic �
 
 ---
 
-## Stack Context (imma-help)
+## Stack Context ([Project Name])
+
+*Adaptation Tip: Replace the stack description below with your own target application components.*
 
 Always carry this context through every phase — do not re-derive:
 
-| Layer | Tech | DSGVO relevance |
-|-------|------|----------------|
-| `apps/web` | Next.js 14 App Router | Frontend consent, cookies, Impressum, DSE |
-| `apps/api` | Fastify + Prisma | Data processing, endpoints, logs |
-| `apps/desktop` | Electron (client-facing) | Local PII storage, RustDesk credentials |
-| `apps/desktop-operator` | Electron (operator) | Remote access initiation, session logs |
-| `apps/desktop-admin` | Electron (admin) | Full data access, bulk operations |
-| `@imma-help/db` | Prisma schema (shared) | PII model definitions, retention, cascades |
-| Stripe | Payment processor | Art. 28 AVV, payment PII |
-| RustDesk | Remote control | Sensitive: screen access = high-risk processing |
-| Twilio | SMS/voice | Communication data, Art. 28 |
-| SSE (`queue-sse.ts`) | Server-Sent Events | PII leakage in event payloads |
-| Cron jobs | Background tasks | Retention enforcement, deletion automation |
+| Layer | Example Tech / Scope | DSGVO Relevance & Focus |
+|-------|----------------------|-------------------------|
+| Frontend | Next.js / React / Vue | Consent collection, cookies, privacy notice, Impressum |
+| API / Backend | Fastify / Express / NestJS | Data processing, endpoints, backend validation, logs |
+| Database | Prisma schema / PostgreSQL / MySQL | PII model definitions, cascades, retention, encryption |
+| Desktop / Client apps | Electron / Native Clients | Local PII storage, credentials caching |
+| Payment Gateway | Stripe / PayPal / Braintree | Art. 28 DPA (AVV), billing PII, webhook security |
+| Communications | Twilio / SendGrid / Mailgun | SMS/Email sending, Art. 28, opt-out mechanisms |
+| Event Streams | SSE / WebSockets / RabbitMQ | PII leakage in live message payloads |
+| Background Workers | Cron jobs / BullMQ / Celery | Retention enforcement, automated deletion/anonymization |
 
 ---
 
@@ -148,7 +147,7 @@ Severity: **CRITICAL** (Art. violation, fine risk > €20k) / **HIGH** (likely v
 ## Phase 0 — PII Inventory
 
 **Role**: EU Data Protection Officer.
-**Task**: Create a complete map of what personal data imma-help collects, where it lives, and under what legal basis.
+**Task**: Create a complete map of what personal data the target project collects, where it lives, and under what legal basis.
 
 ### PASS 1: Prisma Schema PII Audit
 
@@ -313,7 +312,7 @@ If anonymization: is it complete? No re-identification risk from remaining field
 ### PASS 1: Stripe (Zahlungsdienstleister)
 
 - Stripe processes payment card data and billing PII — **Auftragsverarbeiter** (Art. 28)
-- Check: is a Data Processing Agreement (DPA/AVV) with Stripe in place? (Stripe provides a standard DPA — but does imma-help accept it?)
+- Check: is a Data Processing Agreement (DPA/AVV) with Stripe in place? (Stripe provides a standard DPA — but does the target project/company accept it?)
 - Does Stripe send webhook data that includes PII? Check webhook handler for what's logged.
 - Stripe servers in USA → international transfer. Is the Stripe DPA + SCCs sufficient? (Current: Stripe has EU-US Data Privacy Framework adequacy)
 
@@ -391,19 +390,19 @@ This is the highest-risk processor:
 
 ### PASS 1: DSFA-Schwellenwert (Art. 35 DSGVO) — DPIA Threshold
 
-imma-help likely triggers a DPIA because of RustDesk remote access (systematic monitoring of private computers). Check against EDPB WP248 rev.01 criteria:
+Check the target project against EDPB WP248 rev.01 criteria to determine if a DPIA is required (e.g. due to remote computer access, systematic monitoring, processing of sensitive/location data, or vulnerable data subjects like children or elderly):
 
-| Criterion | imma-help | Triggered? |
-|-----------|-----------|-----------|
-| Evaluation/scoring of persons | — | Check if operators rate clients |
-| Automated decision-making | — | Any AI/auto-routing? |
-| Systematic monitoring | RustDesk screen access | **Likely YES** |
-| Sensitive/special category data | Remote computer access | **Likely YES** |
-| Large scale | Depends on user count | Check |
-| Matching/combining datasets | — | Check |
-| Vulnerable subjects | Elderly clients likely | **Likely YES** |
-| New technology | RustDesk + AI | **Likely YES** |
-| Transfer to third countries | RustDesk relay? | Check Phase 4 |
+| Criterion | Project Specifics | Triggered? |
+|-----------|-------------------|-----------|
+| Evaluation/scoring of persons | e.g. credit rating, performance evaluation | Check |
+| Automated decision-making | e.g. automated routing, profiling | Check |
+| Systematic monitoring | e.g. screen access, location tracking | Check |
+| Sensitive/special category data | e.g. biometric data, medical data, access credentials | Check |
+| Large scale | e.g. large volume of data subjects | Check |
+| Matching/combining datasets | e.g. merging user behavior data | Check |
+| Vulnerable subjects | e.g. children, patients, employees | Check |
+| New technology | e.g. machine learning, advanced telemetry | Check |
+| Transfer to third countries | e.g. data transfer outside EEA | Check |
 
 If ≥ 2 criteria: DPIA is **mandatory**. Flag as CRITICAL if no DPIA exists.
 
@@ -452,7 +451,7 @@ Write `$outDir\audit_master_summary.md`:
 ```md
 # DSGVO Audit — Master Summary
 **Date**: YYYY-MM-DD
-**Project**: imma-help
+**Project**: [Project Name]
 **Git HEAD**: [hash] ([branch])
 
 ## Compliance Score
@@ -498,9 +497,9 @@ Order: master summary → phase 0 → 1 → 2 → 3 → 4 → 5 → 6. Separate 
 ## Completion Output (to chat)
 
 ```
-DSGVO-Audit завершено. Збережено в: [outDir]
+DSGVO/GDPR Audit completed. Saved to: [outDir]
 
-Файли:
+Files:
 - audit_0_pii-inventory.md
 - audit_1_legal-basis.md
 - audit_2_subject-rights.md
@@ -512,8 +511,8 @@ DSGVO-Audit завершено. Збережено в: [outDir]
 - FINAL_dsgvo-audit_[timestamp].md
 
 Compliance Score: [N]/100
-DPIA erforderlich: [JA/NEIN]
-Bußgeldrisiko: [LOW/MEDIUM/HIGH]
+DPIA Required: [YES/NO/UNCERTAIN]
+Regulatory Fine Risk: [LOW/MEDIUM/HIGH]
 ```
 
 ---
