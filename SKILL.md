@@ -8,10 +8,10 @@ description: Multi-phase DSGVO/GDPR compliance audit skill and task list for age
 ## Trigger
 
 Use this skill when the user invokes `/dsgvo-audit`, asks for:
-- "DSGVO-Prüfung", "GDPR audit", "перевір DSGVO", "compliance check"
-- "чи є порушення GDPR", "які персональні дані ми збираємо"
-- "перевір видалення акаунту", "data subject rights check"
-- "третьостороні процесори", "Stripe AVV", "RustDesk DSGVO"
+- "DSGVO-Prüfung", "GDPR audit", "GDPR check", "compliance check"
+- "GDPR violation check", "GDPR personal data flow"
+- "account deletion check", "data subject rights check"
+- "third-party processors", "Stripe AVV", "RustDesk DSGVO"
 
 **STRICT READ-ONLY**: Never modify, refactor, or create files inside the project repository. Only write reports to `$outDir` under `_Reports`.
 
